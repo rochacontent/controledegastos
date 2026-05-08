@@ -425,18 +425,6 @@ const CAT_CORES=['#7C6FE0','#34C48B','#E85858','#F59E2B','#60B0F4','#F472B6','#A
 const EMOJIS={'Alimentação':'🍔','Moradia':'🏠','Transporte':'🚗','Saúde':'❤️','Lazer':'🎮','Educação':'📚','Vestuário':'👗','Assinaturas':'📱','Salário':'💼','Freelance':'💻','Investimentos':'📈','Outros':'📦'};
 
 let txs=JSON.parse(localStorage.getItem('ff_txs')||'[]');
-
-// Remove parcelas órfãs: se um grupo perdeu parcelas por exclusão manual,
-// remove o grupo inteiro para não ficar preso na aba de parcelas
-const gruposPresentes={};
-txs.filter(t=>t.grupoId).forEach(t=>{
-  gruposPresentes[t.grupoId]=(gruposPresentes[t.grupoId]||0)+1;
-});
-txs=txs.filter(t=>{
-  if(!t.grupoId||!t.totalParcelas)return true;
-  return gruposPresentes[t.grupoId]===t.totalParcelas;
-});
-save();
 let savedD=JSON.parse(localStorage.getItem('ff_cd')||'null');
 let savedR=JSON.parse(localStorage.getItem('ff_cr')||'null');
 let catsD=savedD?[...new Set([...savedD,...CATS_DESP_DEF])]:CATS_DESP_DEF.slice();
