@@ -425,8 +425,12 @@ const CAT_CORES=['#7C6FE0','#34C48B','#E85858','#F59E2B','#60B0F4','#F472B6','#A
 const EMOJIS={'Alimentação':'🍔','Moradia':'🏠','Transporte':'🚗','Saúde':'❤️','Lazer':'🎮','Educação':'📚','Vestuário':'👗','Assinaturas':'📱','Salário':'💼','Freelance':'💻','Investimentos':'📈','Outros':'📦'};
 
 let txs=JSON.parse(localStorage.getItem('ff_txs')||'[]');
-let catsD=JSON.parse(localStorage.getItem('ff_cd')||JSON.stringify(CATS_DESP_DEF));
-let catsR=JSON.parse(localStorage.getItem('ff_cr')||JSON.stringify(CATS_REC_DEF));
+let savedD=JSON.parse(localStorage.getItem('ff_cd')||'null');
+let savedR=JSON.parse(localStorage.getItem('ff_cr')||'null');
+let catsD=savedD?[...new Set([...savedD,...CATS_DESP_DEF])]:CATS_DESP_DEF.slice();
+let catsR=savedR?[...new Set([...savedR,...CATS_REC_DEF])]:CATS_REC_DEF.slice();
+localStorage.setItem('ff_cd',JSON.stringify(catsD));
+localStorage.setItem('ff_cr',JSON.stringify(catsR));
 let tipo='despesa';
 let barInst=null,donutInst=null;
 const now=new Date();
