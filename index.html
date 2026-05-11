@@ -528,6 +528,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     Fixas
   </button>
 </nav>
+<script>
 const CATS_DESP_DEF=['Alimentação','Moradia','Transporte','Saúde','Lazer','Educação','Vestuário','Assinaturas','Cartão da minha mãe','Outros'];
 const CATS_REC_DEF=['Salário','Freelance','Investimentos','Outros'];
 const CAT_CORES=['#7C6FE0','#34C48B','#E85858','#F59E2B','#60B0F4','#F472B6','#A78BFA','#34D399','#FB923C','#818CF8'];
@@ -906,21 +907,20 @@ function toggleRecorrente(){
 
 function gerarPendentesRecorrentes(){
   const hoje=new Date();
-  // generate for current month AND all future months already viewed
-  // generate for months from recorrente creation up to current view month
   recorrentes.filter(r=>r.ativo).forEach(r=>{
-    // generate from month of creation up to viewMonth
     const inicio=new Date(r.criadoEm||hoje);
     const fimY=vy, fimM=vm;
     let curY=inicio.getFullYear(), curM=inicio.getMonth();
     while(curY<fimY||(curY===fimY&&curM<=fimM)){
       const mesStr=curY+'-'+String(curM+1).padStart(2,'0');
-      const jaExiste=txs.some(t=>t.recId===r.id&&t.data.slice(0,7)===mesStr);
+      const idFixo='rec_'+r.id+'_'+mesStr;
+      // checa pelo id fixo E por qualquer lançamento com recId naquele mês
+      const jaExiste=txs.some(t=>t.id===idFixo||(t.recId===r.id&&t.data.slice(0,7)===mesStr));
       if(!jaExiste){
         const dia=r.dia||1;
         const dataStr=mesStr+'-'+String(Math.min(dia,28)).padStart(2,'0');
         txs.push({
-          id:'rec_'+r.id+'_'+mesStr,
+          id:idFixo,
           tipo:r.tipo,desc:r.desc,valor:r.valor,cat:r.cat,
           data:dataStr,forma:r.forma,
           recId:r.id,pendente:false,parcela:null
