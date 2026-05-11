@@ -176,6 +176,56 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .screen.active>*{animation:fadeIn .25s ease both}
+
+/* BOTTOM NAV (mobile only) */
+.bottom-nav{display:none}
+
+@media(max-width:768px){
+  body{flex-direction:column}
+  .sidebar{display:none}
+  .main{margin-left:0}
+  .topbar{padding:0 16px;gap:8px;height:56px}
+  .topbar-title h1{font-size:16px}
+  .topbar-title p{display:none}
+  .month-nav .mnav-label{font-size:13px;min-width:110px}
+  .btn-primary span{display:none}
+  .btn-primary{padding:0 12px}
+  .content{padding:16px;padding-bottom:90px}
+  .metrics{grid-template-columns:1fr 1fr;gap:10px}
+  .metric-card{padding:14px}
+  .metric-icon{width:34px;height:34px;margin-bottom:10px}
+  .metric-value{font-size:18px}
+  .grid-2,.grid-3{grid-template-columns:1fr}
+  .card{padding:16px;border-radius:12px}
+  .form-row{grid-template-columns:1fr}
+  .type-toggle{gap:8px}
+  .type-btn{padding:12px 8px;font-size:12px}
+  .search-row{flex-direction:column;gap:8px}
+  .search-row select{width:100%!important}
+  .add-cat-row{flex-wrap:wrap}
+  .add-cat-row select{width:100%!important}
+  .add-cat-btn{width:100%;justify-content:center}
+  .del-btn{width:32px;height:32px}
+  .tx-item{gap:10px;padding:12px 0}
+  .topbar .month-nav{display:none}
+  #modal-overlay>div{width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding:24px 20px 32px!important;position:absolute!important;bottom:0!important}
+  #modal-overlay{align-items:flex-end!important}
+
+  .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:1px solid var(--border);z-index:200;padding:6px 0 max(6px,env(safe-area-inset-bottom))}
+  .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;cursor:pointer;color:var(--muted);font-size:10px;font-weight:500;border:none;background:none;font-family:'DM Sans',sans-serif;transition:color .15s}
+  .bnav-item svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .bnav-item.active{color:var(--purple)}
+  .bnav-item.active svg{stroke-width:2.2}
+
+  .month-nav-mobile{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+  .month-nav-mobile .mnav-btn{width:32px;height:32px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
+  .month-nav-mobile .mnav-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+  .month-nav-mobile .mnav-label{font-size:14px;font-weight:600;color:var(--text);text-transform:capitalize;min-width:140px;text-align:center}
+}
+
+@media(max-width:400px){
+  .metrics{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -209,6 +259,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="nav-item" onclick="goNav('parcelas',this)">
     <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
     Parcelas
+  </div>
+  <div class="nav-item" onclick="goNav('recorrentes',this)">
+    <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    Recorrentes
   </div>
 
   <div class="sidebar-bottom">
@@ -246,6 +300,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
     <!-- RESUMO -->
     <div id="screen-resumo" class="screen active">
+      <div class="month-nav-mobile">
+        <button class="mnav-btn" onclick="changeMonth(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="mnav-label" id="mes-label-m"></span>
+        <button class="mnav-btn" onclick="changeMonth(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
       <div class="metrics">
         <div class="metric-card purple">
           <div class="metric-icon purple">
@@ -348,6 +407,13 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
               </select>
             </div>
           </div>
+          <div id="recorrente-wrap" style="margin-bottom:16px;padding:12px 14px;border:1.5px dashed var(--border);border-radius:var(--radius-xs);display:flex;align-items:center;gap:10px;cursor:pointer" onclick="toggleRecorrente()">
+            <div id="rec-check" style="width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);background:var(--white);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"></div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text)">Despesa recorrente</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:1px">Aparece automaticamente todo mês no saldo</div>
+            </div>
+          </div>
           <div id="parcela-preview" style="display:none;background:var(--purple-xlight);border-radius:var(--radius-xs);padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--purple);font-weight:500"></div>
           <button class="btn-save" onclick="salvar()">
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
@@ -360,6 +426,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
     <!-- HISTÓRICO -->
     <div id="screen-historico" class="screen">
+      <div class="month-nav-mobile">
+        <button class="mnav-btn" onclick="changeMonth(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <span class="mnav-label" id="mes-label-h"></span>
+        <button class="mnav-btn" onclick="changeMonth(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
       <div class="card">
         <div class="search-row">
           <input class="form-input" id="busca" type="text" placeholder="Buscar por descrição ou categoria…" oninput="renderHist()"/>
@@ -403,6 +474,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       </div>
     </div>
 
+    <!-- RECORRENTES -->
+    <div id="screen-recorrentes" class="screen">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-head"><h3>Lançamentos deste mês</h3><span id="rec-pendente-label" style="font-size:12px;color:var(--muted)"></span></div>
+        <div id="rec-pendentes-lista"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h3>Recorrências ativas</h3><span style="font-size:11px;color:var(--muted)">Clique em cancelar para parar</span></div>
+        <div id="rec-ativas-lista"></div>
+      </div>
+    </div>
+
     <!-- PARCELAS -->
     <div id="screen-parcelas" class="screen">
       <div class="card" style="margin-bottom:20px">
@@ -418,13 +501,41 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div>
 </div>
 
-<script>
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav" aria-label="Navegação">
+  <button class="bnav-item active" id="bn-resumo" onclick="goNav('resumo',document.querySelectorAll('.nav-item')[0]);setBottomNav('resumo')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Início
+  </button>
+  <button class="bnav-item" id="bn-lancar" onclick="goNav('lancar',document.querySelectorAll('.nav-item')[1]);setBottomNav('lancar')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    Lançar
+  </button>
+  <button class="bnav-item" id="bn-historico" onclick="goNav('historico',document.querySelectorAll('.nav-item')[2]);setBottomNav('historico')">
+    <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    Histórico
+  </button>
+  <button class="bnav-item" id="bn-categorias" onclick="goNav('categorias',document.querySelectorAll('.nav-item')[3]);setBottomNav('categorias')">
+    <svg viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10z"/></svg>
+    Categorias
+  </button>
+  <button class="bnav-item" id="bn-parcelas" onclick="goNav('parcelas',document.querySelectorAll('.nav-item')[4]);setBottomNav('parcelas')">
+    <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+    Parcelas
+  </button>
+  <button class="bnav-item" id="bn-recorrentes" onclick="goNav('recorrentes',document.querySelectorAll('.nav-item')[5]);setBottomNav('recorrentes')">
+    <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+    Fixas
+  </button>
+</nav>
 const CATS_DESP_DEF=['Alimentação','Moradia','Transporte','Saúde','Lazer','Educação','Vestuário','Assinaturas','Cartão da minha mãe','Outros'];
 const CATS_REC_DEF=['Salário','Freelance','Investimentos','Outros'];
 const CAT_CORES=['#7C6FE0','#34C48B','#E85858','#F59E2B','#60B0F4','#F472B6','#A78BFA','#34D399','#FB923C','#818CF8'];
 const EMOJIS={'Alimentação':'🍔','Moradia':'🏠','Transporte':'🚗','Saúde':'❤️','Lazer':'🎮','Educação':'📚','Vestuário':'👗','Assinaturas':'📱','Salário':'💼','Freelance':'💻','Investimentos':'📈','Outros':'📦'};
 
 let txs=JSON.parse(localStorage.getItem('ff_txs')||'[]');
+let recorrentes=JSON.parse(localStorage.getItem('ff_rec')||'[]');
+let isRecorrente=false;
 let savedD=JSON.parse(localStorage.getItem('ff_cd')||'null');
 let savedR=JSON.parse(localStorage.getItem('ff_cr')||'null');
 let catsD=savedD?[...new Set([...savedD,...CATS_DESP_DEF])]:CATS_DESP_DEF.slice();
@@ -436,19 +547,25 @@ let barInst=null,donutInst=null;
 const now=new Date();
 let vy=now.getFullYear(),vm=now.getMonth();
 
-function save(){localStorage.setItem('ff_txs',JSON.stringify(txs));localStorage.setItem('ff_cd',JSON.stringify(catsD));localStorage.setItem('ff_cr',JSON.stringify(catsR));}
+function save(){localStorage.setItem('ff_txs',JSON.stringify(txs));localStorage.setItem('ff_cd',JSON.stringify(catsD));localStorage.setItem('ff_cr',JSON.stringify(catsR));localStorage.setItem('ff_rec',JSON.stringify(recorrentes));}
 function fmtR(v){return'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fmtMes(y,m){return new Date(y,m,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});}
 function txMes(y,m){return txs.filter(t=>{const d=new Date(t.data+'T12:00');return d.getFullYear()===y&&d.getMonth()===m;});}
 function emoji(c){return EMOJIS[c]||'📦';}
 function corCat(c,all){const i=all.indexOf(c);return CAT_CORES[i%CAT_CORES.length];}
 
+function setBottomNav(id){
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('bn-'+id);
+  if(el)el.classList.add('active');
+}
+
 function goNav(id,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  el.classList.add('active');
+  if(el)el.classList.add('active');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
-  const titles={resumo:['Dashboard','Visão geral das suas finanças'],lancar:['Novo Lançamento','Registre uma receita ou despesa'],historico:['Histórico','Todos os seus lançamentos'],categorias:['Categorias','Onde seu dinheiro está indo'],parcelas:['Parcelas','Controle das suas compras parceladas']};
+  const titles={resumo:['Dashboard','Visão geral das suas finanças'],lancar:['Novo Lançamento','Registre uma receita ou despesa'],historico:['Histórico','Todos os seus lançamentos'],categorias:['Categorias','Onde seu dinheiro está indo'],parcelas:['Parcelas','Controle das suas compras parceladas'],recorrentes:['Recorrentes','Despesas e receitas que se repetem todo mês']};
   document.getElementById('topbar-title').textContent=titles[id][0];
   document.getElementById('topbar-sub').textContent=titles[id][1];
   renderAll();
@@ -457,8 +574,9 @@ function goNav(id,el){
 function changeMonth(d){vm+=d;if(vm>11){vm=0;vy++;}if(vm<0){vm=11;vy--;}renderAll();}
 
 function renderAll(){
-  document.getElementById('mes-label').textContent=fmtMes(vy,vm);
-  renderMetrics();renderBar();renderDonut();renderUltimos();renderHist();renderCatBars();renderCatsTags();updateCatSel();renderParcelas();
+  const label=fmtMes(vy,vm);
+  ['mes-label','mes-label-m','mes-label-h'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=label;});
+  gerarPendentesRecorrentes();renderMetrics();renderBar();renderDonut();renderUltimos();renderHist();renderCatBars();renderCatsTags();updateCatSel();renderParcelas();renderRecorrentes();
 }
 
 function renderMetrics(){
@@ -584,6 +702,9 @@ function setTipo(t){
   document.getElementById('btn-desp').className='type-btn '+(t==='despesa'?'active-desp':'');
   document.getElementById('btn-rec').className='type-btn '+(t==='receita'?'active-rec':'');
   updateCatSel();
+  // update recorrente label
+  const recLbl=document.querySelector('#recorrente-wrap div:last-child div:first-child');
+  if(recLbl)recLbl.textContent=(t==='receita'?'Receita recorrente':'Despesa recorrente');
 }
 
 function toggleParcelas(){
@@ -638,6 +759,17 @@ function salvar(){
     }
   } else {
     txs.push({id:Date.now().toString(),tipo,desc,valor,cat,data,forma,parcela:null});
+  }
+  if(isRecorrente){
+    // save as recorrente template
+    const dia=parseInt(document.getElementById('f-data').value.slice(8,10))||1;
+    recorrentes.push({id:'r_'+Date.now(),tipo,desc,valor,cat,forma,dia,ativo:true,criadoEm:new Date().toISOString()});
+    // reset toggle
+    isRecorrente=false;
+    const check=document.getElementById('rec-check');
+    const wrap=document.getElementById('recorrente-wrap');
+    check.innerHTML='';check.style.background='var(--white)';check.style.borderColor='var(--border)';
+    wrap.style.borderColor='var(--border)';wrap.style.background='transparent';
   }
   save();
   document.getElementById('f-desc').value='';
@@ -747,6 +879,119 @@ function rmCat(c,t){
   if(t==='despesa')catsD=catsD.filter(x=>x!==c);
   else catsR=catsR.filter(x=>x!==c);
   save();renderAll();
+}
+
+
+function toggleRecorrente(){
+  isRecorrente=!isRecorrente;
+  const check=document.getElementById('rec-check');
+  const wrap=document.getElementById('recorrente-wrap');
+  if(isRecorrente){
+    check.innerHTML='<svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:white;fill:none;stroke-width:3"><polyline points="20 6 9 17 4 12"/></svg>';
+    check.style.background='var(--accent, var(--purple))';
+    check.style.borderColor='var(--accent, var(--purple))';
+    wrap.style.borderColor='var(--accent, var(--purple))';
+    wrap.style.background='var(--accent-xlight, var(--purple-xlight))';
+    // update label
+    const lbl=wrap.querySelector('div:last-child div:first-child');
+    if(lbl) lbl.textContent = (document.getElementById('btn-rec').classList.contains('active-rec') ? 'Receita recorrente' : 'Despesa recorrente');
+  } else {
+    check.innerHTML='';
+    check.style.background='var(--white)';
+    check.style.borderColor='var(--border)';
+    wrap.style.borderColor='var(--border)';
+    wrap.style.background='transparent';
+  }
+}
+
+function gerarPendentesRecorrentes(){
+  const hoje=new Date();
+  // generate for current month AND all future months already viewed
+  // generate for months from recorrente creation up to current view month
+  recorrentes.filter(r=>r.ativo).forEach(r=>{
+    // generate from month of creation up to viewMonth
+    const inicio=new Date(r.criadoEm||hoje);
+    const fimY=vy, fimM=vm;
+    let curY=inicio.getFullYear(), curM=inicio.getMonth();
+    while(curY<fimY||(curY===fimY&&curM<=fimM)){
+      const mesStr=curY+'-'+String(curM+1).padStart(2,'0');
+      const jaExiste=txs.some(t=>t.recId===r.id&&t.data.slice(0,7)===mesStr);
+      if(!jaExiste){
+        const dia=r.dia||1;
+        const dataStr=mesStr+'-'+String(Math.min(dia,28)).padStart(2,'0');
+        txs.push({
+          id:'rec_'+r.id+'_'+mesStr,
+          tipo:r.tipo,desc:r.desc,valor:r.valor,cat:r.cat,
+          data:dataStr,forma:r.forma,
+          recId:r.id,pendente:false,parcela:null
+        });
+      }
+      curM++;
+      if(curM>11){curM=0;curY++;}
+    }
+  });
+  save();
+}
+
+
+
+function cancelarRecorrente(id){
+  if(!confirm('Cancelar esta recorrência? Ela não aparecerá mais nos próximos meses.'))return;
+  const r=recorrentes.find(x=>x.id===id);
+  if(r)r.ativo=false;
+  // remove pending txs for this recorrente
+  txs=txs.filter(t=>!(t.recId===id&&t.pendente));
+  save();renderAll();
+}
+
+function renderRecorrentes(){
+  const mesStr=vy+'-'+String(vm+1).padStart(2,'0');
+  const doMes=txs.filter(t=>t.recId&&!t.pendente&&t.data.slice(0,7)===mesStr);
+  const ativas=recorrentes.filter(r=>r.ativo);
+  const allCats=[...catsD,...catsR];
+
+  const elP=document.getElementById('rec-pendentes-lista');
+  const elA=document.getElementById('rec-ativas-lista');
+  const lbl=document.getElementById('rec-pendente-label');
+  if(lbl)lbl.textContent=doMes.length?doMes.length+' lançamento(s) recorrente(s)':'Nenhuma recorrência neste mês';
+
+  if(!elP||!elA)return;
+
+  if(!doMes.length){
+    elP.innerHTML='<div class="empty-state" style="padding:20px 0"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Nenhuma recorrência neste mês</p></div>';
+  } else {
+    elP.innerHTML=doMes.map(t=>{
+      const cor=corCat(t.cat,allCats);
+      const s=t.tipo==='receita';
+      return`<div class="tx-item">
+        <div class="tx-dot" style="background:${cor}22">${emoji(t.cat)}</div>
+        <div class="tx-info">
+          <div class="tx-desc">${t.desc||t.cat} <span style="display:inline-block;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:#EEF6FF;color:#3B82F6;margin-left:6px">🔁 Recorrente</span></div>
+          <div class="tx-meta">${t.cat} · ${t.forma} · todo mês</div>
+        </div>
+        <div class="tx-val ${s?'pos':'neg'}">${s?'+':'-'} ${fmtR(t.valor)}</div>
+      </div>`;
+    }).join('');
+  }
+
+  if(!ativas.length){
+    elA.innerHTML='<div class="empty-state" style="padding:20px 0"><p>Nenhuma recorrência cadastrada ainda</p></div>';
+  } else {
+    elA.innerHTML=ativas.map(r=>{
+      const cor=corCat(r.cat,allCats);
+      const s=r.tipo==='receita';
+      const desde=r.criadoEm?new Date(r.criadoEm).toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):'—';
+      return`<div class="tx-item">
+        <div class="tx-dot" style="background:${cor}22">${emoji(r.cat)}</div>
+        <div class="tx-info">
+          <div class="tx-desc">${r.desc||r.cat}</div>
+          <div class="tx-meta">${r.cat} · ${r.forma} · dia ${r.dia||1} · desde ${desde}</div>
+        </div>
+        <div class="tx-val ${s?'pos':'neg'}" style="margin-right:8px">${s?'+':'-'} ${fmtR(r.valor)}</div>
+        <button onclick="cancelarRecorrente('${r.id}')" style="padding:5px 10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0">Cancelar</button>
+      </div>`;
+    }).join('');
+  }
 }
 
 document.getElementById('f-data').value=new Date().toISOString().slice(0,10);
