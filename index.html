@@ -743,32 +743,33 @@ function salvar(){
   const msg=document.getElementById('form-msg');
   if(!data||isNaN(valor)||valor<=0){msg.textContent='Preencha o valor e a data.';msg.className='form-msg err';return;}
 
-  if(forma==='Crédito'){
-    const n=parseInt(document.getElementById('f-parcelas').value)||1;
-    const valorParc=parseFloat((valor/n).toFixed(2));
+  const nParc = forma==='Crédito' ? (parseInt(document.getElementById('f-parcelas').value)||1) : 1;
+
+  // crédito parcelado + recorrente são conflitantes — avisa em vez de engolir silenciosamente
+  if(isRecorrente && forma==='Crédito' && nParc>1){
+    msg.textContent='Não dá pra combinar recorrência com crédito parcelado. Tire as parcelas ou desmarque recorrente.';
+    msg.className='form-msg err';
+    return;
+  }
+
+  if(forma==='Crédito' && nParc>1){
+    // compra parcelada normal
+    const valorParc=parseFloat((valor/nParc).toFixed(2));
     const grupoId='grp_'+Date.now();
     const dataBase=new Date(data+'T12:00');
-    for(let i=0;i<n;i++){
+    for(let i=0;i<nParc;i++){
       const d=new Date(dataBase);
       d.setMonth(d.getMonth()+i);
       const ds=d.toISOString().slice(0,10);
       txs.push({
         id:Date.now().toString()+'_'+i,
         tipo,desc,valor:valorParc,cat,data:ds,forma,
-        parcela:i+1,totalParcelas:n,grupoId,valorTotal:valor,pago:false
+        parcela:i+1,totalParcelas:nParc,grupoId,valorTotal:valor,pago:false
       });
     }
-    // recorrência não se aplica a compras parceladas no crédito
-    if(isRecorrente){
-      isRecorrente=false;
-      const check=document.getElementById('rec-check');
-      const wrap=document.getElementById('recorrente-wrap');
-      check.innerHTML='';check.style.background='var(--white)';check.style.borderColor='var(--border)';
-      wrap.style.borderColor='var(--border)';wrap.style.background='transparent';
-    }
   } else if(isRecorrente){
-    // cria o template da recorrência e o lançamento do mês atual já vinculado a ele,
-    // pra gerarPendentesRecorrentes não duplicar o mês corrente
+    // funciona pra qualquer forma à vista (Pix, Débito, Dinheiro, Crédito 1x).
+    // cria o template e o lançamento do mês atual já vinculado, pra gerarPendentesRecorrentes não duplicar.
     const dia=parseInt(data.slice(8,10))||1;
     const recId='r_'+Date.now();
     recorrentes.push({id:recId,tipo,desc,valor,cat,forma,dia,ativo:true,criadoEm:new Date().toISOString()});
@@ -778,7 +779,7 @@ function salvar(){
       tipo,desc,valor,cat,data,forma,
       recId,pendente:false,parcela:null
     });
-    // reset toggle
+    // reset toggle visual
     isRecorrente=false;
     const check=document.getElementById('rec-check');
     const wrap=document.getElementById('recorrente-wrap');
