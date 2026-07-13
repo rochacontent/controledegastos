@@ -899,15 +899,19 @@ function deletar(id){
 }
 
 function mostrarConfirmDelete(id, msg, onConfirm, onAlt, lblConfirm='Excluir', lblAlt=null){
-  // remove any existing confirm bar
   document.querySelectorAll('.confirm-bar').forEach(e=>e.remove());
-  const item=document.querySelector(`[data-txid="${id}"]`);
-  if(!item)return;
+  // find by attribute value using filter instead of querySelector (avoids CSS special char issues)
+  const item=Array.from(document.querySelectorAll('[data-txid]')).find(el=>el.getAttribute('data-txid')===id);
+  if(!item){
+    // fallback: just run directly without inline bar
+    if(onConfirm)onConfirm();
+    return;
+  }
   const bar=document.createElement('div');
   bar.className='confirm-bar';
   bar.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--red-bg);border-radius:8px;margin-top:4px;font-size:12px;flex-wrap:wrap';
   bar.innerHTML=`<span style="flex:1;color:var(--red);font-weight:500">${msg}</span>
-    <button onclick="this.closest('.confirm-bar').remove()" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>
+    <button onclick="this.closest('.confirm-bar').remove()" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Não</button>
     ${lblAlt?`<button id="cb-alt" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">${lblAlt}</button>`:''}
     <button id="cb-confirm" style="padding:4px 10px;border:none;border-radius:6px;background:var(--red);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${lblConfirm}</button>`;
   item.after(bar);
@@ -984,17 +988,23 @@ function gerarPendentesRecorrentes(){
 
 
 
+function confirmarCancelamento(id, btn){
+  // replace the button with confirm row inline
+  const wrap=btn.parentElement;
+  wrap.innerHTML=`
+    <span style="font-size:11px;color:var(--muted);margin-bottom:2px;display:block">Tem certeza?</span>
+    <div style="display:flex;gap:6px">
+      <button onclick="renderRecorrentes()" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif">Não</button>
+      <button onclick="cancelarRecorrente('${id}')" style="padding:4px 10px;background:var(--red);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Sim, cancelar</button>
+    </div>`;
+}
+
 function cancelarRecorrente(id){
   const r=recorrentes.find(x=>x.id===id);
   if(!r)return;
-  mostrarConfirmDelete('rec_'+id,'Cancelar esta recorrência? Todos os lançamentos futuros serão removidos.',
-    ()=>{
-      r.ativo=false;
-      // remove todos os lançamentos gerados automaticamente por esta recorrência
-      txs=txs.filter(t=>t.recId!==id);
-      save();renderAll();
-    }
-  );
+  r.ativo=false;
+  txs=txs.filter(t=>t.recId!==id);
+  save();renderAll();
 }
 
 function renderRecorrentes(){
@@ -1041,7 +1051,9 @@ function renderRecorrentes(){
           <div class="tx-meta">${r.cat} · ${r.forma} · dia ${r.dia||1} · desde ${desde}</div>
         </div>
         <div class="tx-val ${s?'pos':'neg'}" style="margin-right:8px">${s?'+':'-'} ${fmtR(r.valor)}</div>
-        <button onclick="cancelarRecorrente('${r.id}')" style="padding:5px 10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;flex-shrink:0">Cancelar</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <button onclick="confirmarCancelamento('${r.id}',this)" style="padding:5px 10px;background:var(--red-bg);color:var(--red);border:1px solid var(--red);border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>
+        </div>
       </div>`;
     }).join('');
   }
