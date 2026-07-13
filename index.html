@@ -116,7 +116,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .cat-bar-right{display:flex;align-items:center;gap:8px}
 .cat-bar-amt{font-size:12px;font-weight:600;color:var(--text)}
 .cat-bar-pct{font-size:10px;color:var(--muted)}
-.cat-bar-track{height:5px;background:var(--purple-xlight);border-radius:3px;overflow:hidden}
+.cat-bar-track{height:6px;background:var(--purple-xlight);border-radius:3px;overflow:hidden;position:relative}
 .cat-bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
 
 /* FORM */
@@ -631,13 +631,19 @@ function txHTML(t,del=true){
   const s=t.tipo==='receita';
   const d=new Date(t.data+'T12:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   const parcInfo=t.parcela?' · '+t.parcela+'/'+t.totalParcelas+'x':'';
+  const pago=t.pago===true;
+  const pagoBtn=del?`<button onclick="togglePago('${t.id}')" title="${pago?'Marcar como não pago':'Marcar como pago'}"
+    style="width:26px;height:26px;border-radius:6px;border:1.5px solid ${pago?'var(--green)':'var(--border)'};background:${pago?'var(--green-bg)':'none'};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;margin-right:2px">
+    <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:${pago?'var(--green)':'var(--muted)'};fill:none;stroke-width:2.5"><polyline points="20 6 9 17 4 12"/></svg>
+  </button>`:'';
   const btns=del?`
+    ${pagoBtn}
     <button class="del-btn" onclick="abrirEdicao('${t.id}')" aria-label="Editar" title="Editar" style="margin-right:2px"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
     <button class="del-btn" onclick="deletar('${t.id}')" aria-label="Excluir" title="Excluir"><svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:'';
-  return`<div class="tx-item">
+  return`<div class="tx-item" data-txid="${t.id}" style="${pago?'opacity:.6':''}">
     <div class="tx-dot" style="background:${cor}22">${emoji(t.cat)}</div>
     <div class="tx-info">
-      <div class="tx-desc">${t.desc||t.cat}<span class="tx-tag ${s?'rec':'dep'}">${s?'Receita':'Despesa'}</span></div>
+      <div class="tx-desc" style="${pago?'text-decoration:line-through':''}">${t.desc||t.cat}<span class="tx-tag ${s?'rec':'dep'}">${s?'Receita':'Despesa'}</span>${pago?'<span style="font-size:10px;color:var(--green);margin-left:4px;font-weight:600">✓ pago</span>':''}</div>
       <div class="tx-meta">${t.cat} · ${d} · ${t.forma}${parcInfo}</div>
     </div>
     <div class="tx-val ${s?'pos':'neg'}">${s?'+':'-'} ${fmtR(t.valor)}</div>
@@ -670,19 +676,38 @@ function renderCatBars(){
 
 function renderBars(elId,tipo,lista,cats){
   const el=document.getElementById(elId);
-  const agrup={};lista.filter(t=>t.tipo===tipo).forEach(t=>{agrup[t.cat]=(agrup[t.cat]||0)+t.valor;});
+  const agrup={};
+  const agrupPago={};
+  lista.filter(t=>t.tipo===tipo).forEach(t=>{
+    agrup[t.cat]=(agrup[t.cat]||0)+t.valor;
+    if(t.pago)agrupPago[t.cat]=(agrupPago[t.cat]||0)+t.valor;
+  });
   const total=Object.values(agrup).reduce((a,v)=>a+v,0);
+  const totalPago=Object.values(agrupPago).reduce((a,v)=>a+v,0);
   const sorted=Object.entries(agrup).sort((a,b)=>b[1]-a[1]);
   if(!sorted.length){el.innerHTML='<div class="empty-state" style="padding:20px 0"><p>Sem dados este mês</p></div>';return;}
-  el.innerHTML=sorted.map(([cat,val],i)=>{
+
+  const resumoPago=tipo==='despesa'&&totalPago>0?`<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--green-bg);border-radius:8px;margin-bottom:14px">
+    <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:var(--green);fill:none;stroke-width:2.5;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg>
+    <span style="font-size:12px;color:var(--green);font-weight:600">${fmtR(totalPago)} pagos</span>
+    <span style="font-size:11px;color:var(--muted);margin-left:auto">${fmtR(total-totalPago)} em aberto</span>
+  </div>`:'';
+
+  el.innerHTML=resumoPago+sorted.map(([cat,val])=>{
     const pct=total>0?Math.round(val/total*100):0;
+    const pago=agrupPago[cat]||0;
+    const pctPago=val>0?Math.round(pago/val*100):0;
     const cor=corCat(cat,[...catsD,...catsR]);
     return`<div class="cat-bar-item">
       <div class="cat-bar-top">
         <div class="cat-bar-name">${emoji(cat)} ${cat}</div>
         <div class="cat-bar-right"><div class="cat-bar-amt">${fmtR(val)}</div><div class="cat-bar-pct">${pct}%</div></div>
       </div>
-      <div class="cat-bar-track"><div class="cat-bar-fill" style="width:${pct}%;background:${cor}"></div></div>
+      <div class="cat-bar-track" style="position:relative">
+        <div class="cat-bar-fill" style="width:${pct}%;background:${cor}22;position:absolute;top:0;left:0;height:100%"></div>
+        <div class="cat-bar-fill" style="width:${Math.round(pct*pctPago/100)}%;background:${cor};position:absolute;top:0;left:0;height:100%"></div>
+      </div>
+      ${pago>0?`<div style="font-size:10px;color:var(--green);margin-top:3px;font-weight:500">✓ ${fmtR(pago)} pagos de ${fmtR(val)}</div>`:''}
     </div>`;
   }).join('');
 }
@@ -851,19 +876,43 @@ function renderParcelas(){
   }
 }
 
+function togglePago(id){
+  const t=txs.find(x=>x.id===id);
+  if(!t)return;
+  t.pago=!t.pago;
+  save();renderAll();
+}
+
 function deletar(id){
   const t=txs.find(x=>x.id===id);
   if(!t)return;
   if(t.grupoId&&t.totalParcelas>1){
     const restantes=txs.filter(x=>x.grupoId===t.grupoId);
-    const opcao=confirm(`Este lançamento faz parte de uma compra de ${t.totalParcelas}x.\n\nOK = excluir TODAS as ${restantes.length} parcela(s)\nCancelar = excluir só esta parcela`);
-    if(opcao){txs=txs.filter(x=>x.grupoId!==t.grupoId);}
-    else{txs=txs.filter(x=>x.id!==id);}
+    // show inline confirmation in the item
+    mostrarConfirmDelete(id,`Excluir todas as ${restantes.length} parcelas desta compra?`,
+      ()=>{txs=txs.filter(x=>x.grupoId!==t.grupoId);save();renderAll();},
+      ()=>{txs=txs.filter(x=>x.id!==id);save();renderAll();},'Todas','Só esta');
   } else {
-    if(!confirm('Excluir este lançamento?'))return;
-    txs=txs.filter(x=>x.id!==id);
+    mostrarConfirmDelete(id,'Excluir este lançamento?',
+      ()=>{txs=txs.filter(x=>x.id!==id);save();renderAll();});
   }
-  save();renderAll();
+}
+
+function mostrarConfirmDelete(id, msg, onConfirm, onAlt, lblConfirm='Excluir', lblAlt=null){
+  // remove any existing confirm bar
+  document.querySelectorAll('.confirm-bar').forEach(e=>e.remove());
+  const item=document.querySelector(`[data-txid="${id}"]`);
+  if(!item)return;
+  const bar=document.createElement('div');
+  bar.className='confirm-bar';
+  bar.style.cssText='display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--red-bg);border-radius:8px;margin-top:4px;font-size:12px;flex-wrap:wrap';
+  bar.innerHTML=`<span style="flex:1;color:var(--red);font-weight:500">${msg}</span>
+    <button onclick="this.closest('.confirm-bar').remove()" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Cancelar</button>
+    ${lblAlt?`<button id="cb-alt" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">${lblAlt}</button>`:''}
+    <button id="cb-confirm" style="padding:4px 10px;border:none;border-radius:6px;background:var(--red);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${lblConfirm}</button>`;
+  item.after(bar);
+  bar.querySelector('#cb-confirm').onclick=()=>{bar.remove();onConfirm();};
+  if(lblAlt)bar.querySelector('#cb-alt').onclick=()=>{bar.remove();if(onAlt)onAlt();};
 }
 
 function addCat(){
