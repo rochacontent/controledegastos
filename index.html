@@ -396,7 +396,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
                 <option>Pix</option><option>Débito</option><option>Crédito</option><option>Dinheiro</option>
               </select>
             </div>
-            <div class="form-section" style="margin:0" id="parcelas-wrap" style="display:none">
+            <div class="form-section" style="margin:0;display:none" id="parcelas-wrap">
               <label>Parcelas</label>
               <select class="form-input" id="f-parcelas" onchange="atualizarPreview()">
                 <option value="1">À vista (1x)</option>
@@ -985,12 +985,16 @@ function gerarPendentesRecorrentes(){
 
 
 function cancelarRecorrente(id){
-  if(!confirm('Cancelar esta recorrência? Ela não aparecerá mais nos próximos meses.'))return;
   const r=recorrentes.find(x=>x.id===id);
-  if(r)r.ativo=false;
-  // remove pending txs for this recorrente
-  txs=txs.filter(t=>!(t.recId===id&&t.pendente));
-  save();renderAll();
+  if(!r)return;
+  mostrarConfirmDelete('rec_'+id,'Cancelar esta recorrência? Todos os lançamentos futuros serão removidos.',
+    ()=>{
+      r.ativo=false;
+      // remove todos os lançamentos gerados automaticamente por esta recorrência
+      txs=txs.filter(t=>t.recId!==id);
+      save();renderAll();
+    }
+  );
 }
 
 function renderRecorrentes(){
@@ -1030,7 +1034,7 @@ function renderRecorrentes(){
       const cor=corCat(r.cat,allCats);
       const s=r.tipo==='receita';
       const desde=r.criadoEm?new Date(r.criadoEm).toLocaleDateString('pt-BR',{month:'short',year:'numeric'}):'—';
-      return`<div class="tx-item">
+      return`<div class="tx-item" data-txid="rec_${r.id}">
         <div class="tx-dot" style="background:${cor}22">${emoji(r.cat)}</div>
         <div class="tx-info">
           <div class="tx-desc">${r.desc||r.cat}</div>
