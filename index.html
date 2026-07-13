@@ -886,46 +886,62 @@ function togglePago(id){
 function deletar(id){
   const t=txs.find(x=>x.id===id);
   if(!t)return;
-  if(t.grupoId&&t.totalParcelas>1){
-    const restantes=txs.filter(x=>x.grupoId===t.grupoId);
-    // show confirm row inside the list
-    renderHistComConfirm(id,
-      `Excluir só este mês ou todas as ${restantes.length} parcelas?`,
-      ()=>{txs=txs.filter(x=>x.grupoId!==t.grupoId);save();renderAll();},
-      ()=>{txs=txs.filter(x=>x.id!==id);save();renderAll();},
-      'Todas','Só esta');
-  } else {
-    renderHistComConfirm(id,'Excluir este lançamento?',
-      ()=>{txs=txs.filter(x=>x.id!==id);save();renderAll();});
-  }
-}
-
-function renderHistComConfirm(id, msg, onSim, onAlt, lblSim='Excluir', lblAlt=null){
-  // re-render hist but inject a confirm row after the target item
-  const lista=[...txMes(vy,vm)].filter(t=>{
-    const busca=(document.getElementById('busca')?.value||'').toLowerCase();
-    const ft=document.getElementById('filtro-tipo')?.value||'';
-    const mb=!busca||(t.desc||'').toLowerCase().includes(busca)||t.cat.toLowerCase().includes(busca);
-    const mt=!ft||t.tipo===ft;return mb&&mt;
-  }).sort((a,b)=>new Date(b.data)-new Date(a.data));
 
   const el=document.getElementById('hist-lista');
   if(!el)return;
 
-  const rows=lista.map(t=>{
-    const html=txHTML(t,true);
-    if(t.id!==id)return html;
-    const altBtn=lblAlt?`<button onclick="(${onAlt.toString()})()" style="padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">${lblAlt}</button>`:'';
-    const confirm=`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--red-bg);border-radius:8px;margin:4px 0 8px;flex-wrap:wrap">
-      <span style="flex:1;color:var(--red);font-weight:500;font-size:12px">${msg}</span>
-      <button onclick="renderHist()" style="padding:5px 12px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Não</button>
-      ${altBtn}
-      <button onclick="(${onSim.toString()})()" style="padding:5px 12px;border:none;border-radius:6px;background:var(--red);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">${lblSim}</button>
-    </div>`;
-    return html+confirm;
-  }).join('');
+  // remove any existing confirm
+  const existing=document.getElementById('confirm-delete-bar');
+  if(existing)existing.remove();
 
-  el.innerHTML=rows||'<div class="empty-state"><p>Nenhum lançamento encontrado</p></div>';
+  const bar=document.createElement('div');
+  bar.id='confirm-delete-bar';
+  bar.style.cssText='display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--red-bg);border-radius:8px;margin:4px 0 8px;flex-wrap:wrap;border:1px solid #f5c6c6';
+
+  const ehParcelado=t.grupoId&&t.totalParcelas>1;
+  const ehRecorrente=!!t.recId;
+
+  let botoesExtra='';
+  if(ehParcelado){
+    const restantes=txs.filter(x=>x.grupoId===t.grupoId).length;
+    botoesExtra=`<button onclick="deletarGrupo('${t.grupoId}')" style="padding:6px 12px;border:none;border-radius:6px;background:#c0392b;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Todas (${restantes}x)</button>`;
+  }
+  if(ehRecorrente){
+    botoesExtra+=`<button onclick="deletarRecorrente('${t.recId}')" style="padding:6px 12px;border:none;border-radius:6px;background:#c0392b;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Todos os meses</button>`;
+  }
+
+  bar.innerHTML=`
+    <span style="flex:1;color:var(--red);font-weight:500;font-size:12px">Excluir este lançamento?</span>
+    <button onclick="document.getElementById('confirm-delete-bar').remove()" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--white);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Não</button>
+    ${botoesExtra}
+    <button onclick="deletarUm('${id}')" style="padding:6px 12px;border:none;border-radius:6px;background:var(--red);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Só este</button>`;
+
+  // insert after the target tx-item
+  const items=el.querySelectorAll('.tx-item');
+  let inserted=false;
+  items.forEach(item=>{
+    if(item.getAttribute('data-txid')===id){
+      item.after(bar);inserted=true;
+    }
+  });
+  if(!inserted)el.appendChild(bar);
+}
+
+function deletarUm(id){
+  txs=txs.filter(x=>x.id!==id);
+  save();renderAll();
+}
+
+function deletarGrupo(grupoId){
+  txs=txs.filter(x=>x.grupoId!==grupoId);
+  save();renderAll();
+}
+
+function deletarRecorrente(recId){
+  const r=recorrentes.find(x=>x.id===recId);
+  if(r)r.ativo=false;
+  txs=txs.filter(x=>x.recId!==recId);
+  save();renderAll();
 }
 
 function addCat(){
