@@ -241,7 +241,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .desafio-summary .metric-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
 .desafio-summary .metric-value{font-size:22px;font-weight:700;color:var(--text)}
 .desafio-summary .metric-sub{font-size:12px;color:var(--muted);margin-top:2px}
-.desafio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:8px}
+.desafio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:8px}
 .week-card{border:1.5px solid var(--border);border-radius:12px;padding:12px;background:var(--white);position:relative;transition:all .15s}
 .week-card.current{border-color:var(--purple);box-shadow:0 0 0 3px var(--purple-xlight)}
 .week-card.done{background:var(--green-bg);border-color:var(--green)}
@@ -307,7 +307,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   </div>
   <div class="nav-item" onclick="goNav('desafio',this)">
     <svg viewBox="0 0 24 24"><path d="M12 2l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z"/></svg>
-    Desafio 52 semanas
+    Desafio 12 meses
   </div>
 
   <div class="sidebar-bottom">
@@ -573,22 +573,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
         <div class="card">
           <div class="metric-label">Total guardado</div>
           <div class="metric-value" id="desafio-total">R$ 0,00</div>
-          <div class="metric-sub" id="desafio-total-sub">em 0 semanas</div>
+          <div class="metric-sub" id="desafio-total-sub">em 0 meses</div>
         </div>
         <div class="card">
-          <div class="metric-label">Semanas marcadas</div>
-          <div class="metric-value" id="desafio-count">0 / 52</div>
+          <div class="metric-label">Meses marcados</div>
+          <div class="metric-value" id="desafio-count">0 / 12</div>
           <div class="metric-sub" id="desafio-pct">0% do ano</div>
         </div>
         <div class="card">
-          <div class="metric-label">Média por semana</div>
+          <div class="metric-label">Média por mês</div>
           <div class="metric-value" id="desafio-media">R$ 0,00</div>
           <div class="metric-sub">Ano <span id="desafio-ano-num"></span></div>
         </div>
       </div>
       <div class="card">
         <div class="card-head">
-          <h3>Semana a semana</h3>
+          <h3>Mês a mês</h3>
           <button onclick="mudarAnoDesafio(-1)" style="padding:6px 10px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" title="Ano anterior">← <span id="desafio-ano-btn"></span></button>
           <button onclick="mudarAnoDesafio(1)" style="padding:6px 10px;background:var(--white);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif" title="Próximo ano">→</button>
         </div>
@@ -665,7 +665,7 @@ function goNav(id,el){
   if(el)el.classList.add('active');
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
-  const titles={resumo:['Dashboard','Visão geral das suas finanças'],lancar:['Novo Lançamento','Registre uma receita ou despesa'],historico:['Histórico','Todos os seus lançamentos'],categorias:['Categorias','Onde seu dinheiro está indo'],parcelas:['Parcelas','Controle das suas compras parceladas'],recorrentes:['Recorrentes','Despesas e receitas que se repetem todo mês'],desafio:['Desafio 52 semanas','Seu progresso semana a semana']};
+  const titles={resumo:['Dashboard','Visão geral das suas finanças'],lancar:['Novo Lançamento','Registre uma receita ou despesa'],historico:['Histórico','Todos os seus lançamentos'],categorias:['Categorias','Onde seu dinheiro está indo'],parcelas:['Parcelas','Controle das suas compras parceladas'],recorrentes:['Recorrentes','Despesas e receitas que se repetem todo mês'],desafio:['Desafio 12 meses','Seu progresso mês a mês']};
   document.getElementById('topbar-title').textContent=titles[id][0];
   document.getElementById('topbar-sub').textContent=titles[id][1];
   renderAll();
@@ -1180,41 +1180,30 @@ function renderRecorrentes(){
   }
 }
 
-// ===== DESAFIO 52 SEMANAS =====
+// ===== DESAFIO 12 MESES =====
+// Usa chave 'YYYY-Mnn' pra não colidir com dados antigos de semanas ('YYYY-Wnn') que ficam
+// preservados no localStorage por segurança.
 let desafioAno=new Date().getFullYear();
+const MESES_ABREV=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
-function keyDesafio(ano,semana){return ano+'-W'+String(semana).padStart(2,'0');}
+function keyDesafio(ano,mes){return ano+'-M'+String(mes).padStart(2,'0');}
 
-function semanaAtualDoAno(){
+function mesAtualDoAno(){
   const h=new Date();
   if(h.getFullYear()!==desafioAno)return null;
-  const inicio=new Date(desafioAno,0,1);
-  const diff=Math.floor((h-inicio)/(1000*60*60*24));
-  const s=Math.floor(diff/7)+1;
-  return s>52?52:s;
+  return h.getMonth()+1;
 }
 
-function rangeDaSemana(ano,semana){
-  const primeiroDia=(semana-1)*7+1;
-  const iniDate=new Date(ano,0,primeiroDia);
-  const fimDia=semana===52?new Date(ano,11,31):new Date(ano,0,primeiroDia+6);
-  const mesIni=iniDate.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-  const mesFim=fimDia.toLocaleDateString('pt-BR',{month:'short'}).replace('.','');
-  const dIni=iniDate.getDate(),dFim=fimDia.getDate();
-  if(mesIni===mesFim)return dIni+'-'+dFim+' '+mesIni;
-  return dIni+' '+mesIni+' – '+dFim+' '+mesFim;
-}
-
-function toggleSemanaDesafio(semana){
-  const k=keyDesafio(desafioAno,semana);
+function toggleMesDesafio(mes){
+  const k=keyDesafio(desafioAno,mes);
   const atual=desafio[k]||{marcada:false,valor:0};
   atual.marcada=!atual.marcada;
   desafio[k]=atual;
   save();renderDesafio();
 }
 
-function setValorSemanaDesafio(semana,strValor){
-  const k=keyDesafio(desafioAno,semana);
+function setValorMesDesafio(mes,strValor){
+  const k=keyDesafio(desafioAno,mes);
   const val=parseFloat(strValor.replace(',','.'))||0;
   const atual=desafio[k]||{marcada:false,valor:0};
   atual.valor=val;
@@ -1225,7 +1214,7 @@ function setValorSemanaDesafio(semana,strValor){
 
 function atualizarResumoDesafio(){
   let total=0,count=0;
-  for(let i=1;i<=52;i++){
+  for(let i=1;i<=12;i++){
     const d=desafio[keyDesafio(desafioAno,i)];
     if(d){
       if(d.valor)total+=d.valor;
@@ -1233,10 +1222,10 @@ function atualizarResumoDesafio(){
     }
   }
   const media=count>0?total/count:0;
-  const pct=Math.round(count/52*100);
+  const pct=Math.round(count/12*100);
   const totalEl=document.getElementById('desafio-total');if(totalEl)totalEl.textContent=fmtR(total);
-  const subEl=document.getElementById('desafio-total-sub');if(subEl)subEl.textContent='em '+count+' semana'+(count===1?'':'s');
-  const cEl=document.getElementById('desafio-count');if(cEl)cEl.textContent=count+' / 52';
+  const subEl=document.getElementById('desafio-total-sub');if(subEl)subEl.textContent='em '+count+' m'+(count===1?'ês':'eses');
+  const cEl=document.getElementById('desafio-count');if(cEl)cEl.textContent=count+' / 12';
   const pEl=document.getElementById('desafio-pct');if(pEl)pEl.textContent=pct+'% do ano';
   const mEl=document.getElementById('desafio-media');if(mEl)mEl.textContent=fmtR(media);
   const aEl=document.getElementById('desafio-ano-num');if(aEl)aEl.textContent=desafioAno;
@@ -1252,25 +1241,25 @@ function renderDesafio(){
   const grid=document.getElementById('desafio-grid');
   if(!grid)return;
   atualizarResumoDesafio();
-  const semAtual=semanaAtualDoAno();
+  const mesAtual=mesAtualDoAno();
   const hoje=new Date();
   const anoAtual=hoje.getFullYear();
   let html='';
-  for(let s=1;s<=52;s++){
-    const k=keyDesafio(desafioAno,s);
+  for(let m=1;m<=12;m++){
+    const k=keyDesafio(desafioAno,m);
     const d=desafio[k]||{marcada:false,valor:0};
-    const range=rangeDaSemana(desafioAno,s);
-    const isCurrent=desafioAno===anoAtual&&s===semAtual;
-    const isFuture=desafioAno>anoAtual||(desafioAno===anoAtual&&semAtual&&s>semAtual);
+    const nomeMes=MESES_ABREV[m-1];
+    const isCurrent=desafioAno===anoAtual&&m===mesAtual;
+    const isFuture=desafioAno>anoAtual||(desafioAno===anoAtual&&mesAtual&&m>mesAtual);
     const cls=[d.marcada?'done':'',isCurrent?'current':'',isFuture&&!d.marcada?'future':''].filter(Boolean).join(' ');
     html+=`<div class="week-card ${cls}">
       <div class="week-num">
-        <span class="week-num-label">Semana</span>
-        <span class="week-num-val">${s}</span>
+        <span class="week-num-label">Mês</span>
+        <span class="week-num-val">${String(m).padStart(2,'0')}</span>
       </div>
-      <div class="week-range">${range}</div>
-      <input class="week-input" type="text" inputmode="decimal" placeholder="R$ 0,00" value="${d.valor?d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):''}" onchange="setValorSemanaDesafio(${s},this.value)"/>
-      <button class="week-check-btn ${d.marcada?'done':''}" onclick="toggleSemanaDesafio(${s})">${d.marcada?'✓ Guardado':'Marcar'}</button>
+      <div class="week-range">${nomeMes} / ${desafioAno}</div>
+      <input class="week-input" type="text" inputmode="decimal" placeholder="R$ 0,00" value="${d.valor?d.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):''}" onchange="setValorMesDesafio(${m},this.value)"/>
+      <button class="week-check-btn ${d.marcada?'done':''}" onclick="toggleMesDesafio(${m})">${d.marcada?'✓ Guardado':'Marcar'}</button>
     </div>`;
   }
   grid.innerHTML=html;
